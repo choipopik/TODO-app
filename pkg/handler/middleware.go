@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 const (
 	authHeader = "Authorization"
 	userCtx    = "userId"
+	listCtx    = "listId"
 )
 
 func (h *Handler) userIdentity(ctx *gin.Context) {
@@ -33,4 +35,36 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 	}
 
 	ctx.Set(userCtx, userId)
+}
+
+func getUserId(ctx *gin.Context) (int, error) {
+	id, ok := ctx.Get(userCtx)
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "user id not found")
+		return 0, errors.New("user id not found")
+	}
+
+	idInt, ok := id.(int)
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "user id invalid type")
+		return 0, errors.New("user id invalid type")
+	}
+
+	return idInt, nil
+}
+
+func getListId(ctx *gin.Context) (int, error) {
+	id, ok := ctx.Get(listCtx)
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "list id not found")
+		return 0, errors.New("list id not found")
+	}
+
+	idInt, ok := id.(int)
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "list id invalid type")
+		return 0, errors.New("list id invalid type")
+	}
+
+	return idInt, nil
 }

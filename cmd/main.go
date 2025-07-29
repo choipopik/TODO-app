@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/choipopik/todo-app"
 	"github.com/choipopik/todo-app/pkg/handler"
@@ -42,10 +45,31 @@ func main() {
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 	srv := new(todo.Server)
+	go func() {
+		err = srv.Run(viper.GetString("port"), handlers.InitRoutes())
+		if err != nil {
+			logrus.Fatalf("error running http server: %s", err.Error())
+		}
+	}()
 
-	err = srv.Run(viper.GetString("port"), handlers.InitRoutes())
+	logrus.Print("App started...")
+
+	quit := make(chan os.Signal, 1)
+
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+
+	logrus.Print("App shutdown...")
+
+	err = srv.Shutdown(context.Background())
 	if err != nil {
-		logrus.Fatalf("error running http server: %s", err.Error())
+		logrus.Errorf("error shutting down server: %s", err.Error())
+	}
+
+	err = db.Close()
+	if err != nil {
+		logrus.Errorf("error closing db: %s", err.Error())
 	}
 }
 

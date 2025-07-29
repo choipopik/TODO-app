@@ -1,0 +1,1 @@
+SELECT id FROM users WHERE username=$1 AND passward_hash=$2
